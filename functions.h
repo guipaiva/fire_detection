@@ -12,15 +12,15 @@
 #include <semaphore.h> 
 
 #define TAM 30
-#define NOS 100
+#define NOS 10
 
 struct nodes
 {
 	int x,y;
-	int fire;
-	char msg[10];
-	int tid;
-}sensor[NOS];
+	/*int fire;
+	char msg[10];*/
+	int id;
+}sensor[NOS][NOS];
 
 sem_t mutex;
 
