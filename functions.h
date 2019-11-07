@@ -14,20 +14,30 @@
 #define TAM 30
 #define NOS 10
 
+
+//TODO:
+// Matriz global
+// Uma struct pra cada thread
+
+
 struct nodes
 {
 	int x,y;
-	/*int fire;
-	char msg[10];*/
+	//int fire;
+	//char msg[4][10];
 	int id;
 }sensor[NOS][NOS];
+
+typedef struct nodes sen_no;
+
+pthread_t nodes[NOS][NOS];
 
 sem_t mutex;
 
 void create_matrix(char mat[TAM][TAM]);
 void *print_matrix(void *args);
 void *fire(void *args);
-void *check_fire(void *args);
+void *sensor_node(void *args);
 
 
 #endif

@@ -5,7 +5,6 @@ int main(int argc, char const *argv[])
 	srand(time(NULL));
 	char mat[TAM][TAM];
 	pthread_t p, f;
-	pthread_t nodes[NOS][NOS];
 	int x,y;
 
 	create_matrix(mat);
