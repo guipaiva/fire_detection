@@ -19,12 +19,12 @@ void create_matrix(char mat[TAM][TAM]){
 
 void *atualiza_hora(void *args){
 	while(1){
-		sleep(1);
 		time_t t = time(NULL);
 		struct tm tm = *localtime(&t);
 		hor = tm.tm_hour;
 		min = tm.tm_min;
 		sec = tm.tm_sec;
+		sleep(1);
 	}
 }	
 
@@ -112,7 +112,7 @@ void *sensor_node(void *args){
 		{
 			for (int j = (sensor->y)-1; j <= (sensor->y) + 1; ++j)
 			{
-				if (i == j)
+				if (i == (sensor->x) && j == (sensor->y))
 					continue;
 				if (mat[i][j] == '@')
 				{	
@@ -122,7 +122,6 @@ void *sensor_node(void *args){
 					fclose(log_fire);
 				}
 			}
-			
 		}	 
 		sleep(1);
 	}
