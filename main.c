@@ -10,9 +10,9 @@ int main(int argc, char const *argv[])
 	create_matrix(mat);
 	sem_init(&mutex, 0, 1);
 
-	FILE *pont_arq, *pont_arq1;
-	pont_arq = fopen("arquivo.txt", "w");
-	pont_arq1 = fopen("arquivo1.txt", "w");
+	FILE *log_fire, *log_thr;
+	log_fire = fopen("incendios.log", "w");
+	log_thr = fopen("threads.log", "w");
 	pthread_create(&hora, NULL, atualiza_hora, NULL);
 	pthread_create(&p, NULL, print_matrix, NULL); 
 	pthread_create(&f, NULL, fire, NULL);

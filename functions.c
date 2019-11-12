@@ -81,7 +81,7 @@ void *print_matrix(void *args){
 }
 
 void *fire(void *args){
-	FILE *pont_arq1;
+	FILE *log_thr;
 	int x,y;
 	int idx, idy;
 	while(1){
@@ -94,9 +94,9 @@ void *fire(void *args){
 			idy = ((y+2)/3)-1;
 			idx = ((x+2)/3)-1;
 			pthread_cancel(sensor_threads[idx][idy]);
-			pont_arq1 = fopen("arquivo1.txt", "a");
-			fprintf(pont_arq1, "Thread %d destruida em %d:%d:%d\n", nodes[idx][idy].id,hor, min, sec);
-			fclose(pont_arq1);
+			log_thr = fopen("threads.log", "a");
+			fprintf(log_thr, "Thread %d destruida em %02d:%02d:%02d\n", nodes[idx][idy].id,hor, min, sec);
+			fclose(log_thr);
 		}
 		else
 			mat[x][y] = '@';
@@ -106,7 +106,7 @@ void *fire(void *args){
 
 void *sensor_node(void *args){
 	Node *sensor = args;
-	FILE *pont_arq;
+	FILE *log_fire;
 	while(1){
 		for (int i = (sensor->x)-1; i <= (sensor->x) + 1; ++i)
 		{
@@ -117,13 +117,14 @@ void *sensor_node(void *args){
 				if (mat[i][j] == '@')
 				{	
 					mat[i][j] = '/';
-					pont_arq = fopen("arquivo.txt", "a");
-					fprintf(pont_arq, "Fogo em [%d][%d]. Thread %d. %d:%d:%d\n",i,j,sensor->id,hor, min, sec);
-					fclose(pont_arq);
+					log_fire = fopen("incendios.log", "a");
+					fprintf(log_fire, "Fogo em [%d][%d]. Thread %d. %02d:%02d:%02d\n",i,j,sensor->id,hor, min, sec);
+					fclose(log_fire);
 				}
 			}
-			sleep(1);
-		}
+			
+		}	 
+		sleep(1);
 	}
 	return 0;
 }

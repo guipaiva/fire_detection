@@ -24,9 +24,10 @@ int hor,min,sec;
 typedef struct node
 {
 	int x,y;
-	//int fire;
-	//char msg[4][10];
+	char up[10], down[10], left[10], right[10];
+	char received[10], to_send[10];
 	int id;
+	int sent;
 }Node;
 
 Node nodes[THR][THR];
@@ -34,7 +35,7 @@ Node nodes[THR][THR];
 pthread_t sensor_threads[THR][THR];
 
 sem_t mutex;
-
+sem_t mutex_file;
 
 void create_matrix(char mat[TAM][TAM]);
 void *atualiza_hora(void *args);
