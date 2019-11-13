@@ -11,11 +11,46 @@ void create_matrix(char mat[TAM][TAM]){
 			nodes[l][k].x = i;
 			nodes[l][k].y = j;
 			nodes[l][k].id = id;
+			nodes[l][k].U = nodes[l][k].D = nodes[l][k].R = nodes[l][k].L = 0; 
+			if (l == 0 || l == 9 || k == 0 || k == 9)
+				nodes[l][k].border = 1;
+			else
+				nodes[l][k].border = 0;
 			id++;
 			pthread_create(&sensor_threads[l][k], NULL, sensor_node, &nodes[l][k]);
 	 	}
 	}
 }
+
+void send_msg(char *msg, int x, int y){
+	FILE *f;
+	f = fopen("teste.txt","a");
+	fprintf(f,"%s %d %d\n",msg,x,y);
+	fclose(f);
+
+	if (nodes[x][y].border == 1)
+		return;
+/*	//TODO: REPLICATE
+	//strncpy(string_destino, string_origem, tamanho);
+*/
+
+	//	Nó de cima
+	strcpy(nodes[x-1][y].down,msg);
+	nodes[x-1][y].D = 1;
+	//	Nó de baixo
+	strcpy(nodes[x+1][y].up,msg);
+	nodes[x+1][y].U = 1;
+	//	Nó da esquerda
+	strcpy(nodes[x][y+1].left,msg);
+	nodes[x][y+1].L = 1;
+	// Nó da direita
+	strcpy(nodes[x][y-1].right,msg);
+	nodes[x][y-1].R = 1;
+}
+
+/*void rep_msg(){
+
+}*/
 
 void *atualiza_hora(void *args){
 	while(1){
@@ -29,32 +64,31 @@ void *atualiza_hora(void *args){
 }	
 
 void *print_matrix(void *args){
-	//char (*mat)[TAM][TAM] = args;
 	while(1)
 	{
 		system("clear");
 		
 		int idx, idy;
 		int yes = 0;
-		
 		printf("\t");
 		for (int i = 0; i < TAM; ++i)
 		{
 			if(i == 9)
 				printf("9 ");
 			else if(i < 10)
-				printf("%d  ",i);
+				printf("%s%d  ",NRM,i);
 			else
 				printf("%d ",i);
 		}
 
 		printf("\n");
+		sem_wait(&mutex);
 		for (int i = 0; i < TAM; ++i)
 		{
 			printf("%d\t", i);
 			for (int j = 0; j < TAM; ++j)
 			{
-				sem_wait(&mutex);
+				
 				if (mat[i][j] == '*') 
 				{	
 					idx = ((i+2)/3)-1;
@@ -63,11 +97,13 @@ void *print_matrix(void *args){
 					mat[i][j] = 'X';
 				}
 
-				if (mat[i][j] == '/')
-					printf("@  ");
+				if (mat[i][j] == '/' || mat[i][j] == '@')
+					printf("%s@%s  ",RED,NRM);
+				else if (mat[i][j] == 'X')
+					printf("%sX%s  ", BLK, NRM);
 				else
 					printf("%c  ",mat[i][j]);
-				sem_post(&mutex);
+				
 			}
 			printf("\n");
 		}
@@ -76,6 +112,7 @@ void *print_matrix(void *args){
 		if (yes)
 			printf("Thread n. %d foi destruida\n", nodes[idx][idy].id);
 		yes = 0;
+		sem_post(&mutex);
 		sleep(1);
 	}
 }
@@ -107,22 +144,46 @@ void *fire(void *args){
 void *sensor_node(void *args){
 	Node *sensor = args;
 	FILE *log_fire;
+	char msg[16];
+	int id;
+	int idx, idy;
+	int x, y;
+	id = sensor->id;
+	x = sensor->x;
+	y = sensor->y;
 	while(1){
-		for (int i = (sensor->x)-1; i <= (sensor->x) + 1; ++i)
+		sem_wait(&mutex);
+		//Replicate
+		for (int i = x-1; i <= x + 1; ++i)
 		{
-			for (int j = (sensor->y)-1; j <= (sensor->y) + 1; ++j)
+			for (int j = x-1; j <= y + 1; ++j)
 			{
-				if (i == (sensor->x) && j == (sensor->y))
+				
+				if (i == x && j == y)
 					continue;
 				if (mat[i][j] == '@')
 				{	
 					mat[i][j] = '/';
-					log_fire = fopen("incendios.log", "a");
-					fprintf(log_fire, "Fogo em [%d][%d]. Thread %d. %02d:%02d:%02d\n",i,j,sensor->id,hor, min, sec);
-					fclose(log_fire);
+					sprintf(msg,"%03d%02d%02d%02d%02d%02d\n",id,i,j,hor,min,sec);
+					idx = ((x+2)/3)-1;
+					idy = ((y+2)/3)-1;
+					send_msg(msg, idx, idy);
 				}
 			}
-		}	 
+		}
+		
+		/*log_fire = fopen("incendios.log", "a");
+		if ((sensor->U) == 1)
+		fprintf(log_fire,"UP = %s ID = %d\n",(sensor->up),id);
+		if ((sensor->D) == 1)
+		fprintf(log_fire,"DOWN = %s ID = %d\n",(sensor->down),id);
+		if ((sensor->L) == 1)
+		fprintf(log_fire,"LEFT = %s ID = %d\n",(sensor->left),id);
+		if ((sensor->R) == 1)
+		fprintf(log_fire,"RIGHT = %s ID = %d\n",(sensor->right),id);
+		//fprintf(log_fire, "Fogo em [%d][%d]. Thread %d. %02d:%02d:%02d\n",i,j,sensor->id,hor, min, sec);
+		fclose(log_fire);*/
+		sem_post(&mutex);
 		sleep(1);
 	}
 	return 0;

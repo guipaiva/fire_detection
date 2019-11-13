@@ -9,7 +9,9 @@ int main(int argc, char const *argv[])
 	create_matrix(mat);
 	sem_init(&mutex, 0, 1);
 
-	FILE *log_fire, *log_thr;
+	FILE *log_fire, *log_thr, *teste;
+	teste = fopen("teste.txt", "w");
+	fclose(teste);
 	log_fire = fopen("incendios.log", "w");
 	fclose(log_fire);
 	log_thr = fopen("threads.log", "w");
