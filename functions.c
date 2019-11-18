@@ -1,5 +1,23 @@
 #include "functions.h"
 
+int converte_x(int id){
+	int x;
+	if (id % 10 == 0)
+		id--;
+	x = 3*(id/10) +1;
+	return x;
+}
+
+int converte_y(int id){
+	int y;
+	if (id % 10 == 0){
+		y = 28;
+		return y;
+	}
+	y = 3 * (id%10) - 2;
+	return y;
+}
+/*Esta função cria a matriz com seus devidos símbolos além de inicializar as threads e as structs*/
 void create_matrix(char mat[TAM][TAM]){
 	memset(mat, '-', sizeof(mat[0][0])*TAM*TAM);
 	int k = 0;
@@ -7,52 +25,137 @@ void create_matrix(char mat[TAM][TAM]){
 	int id = 1;
 	for (int i = 1, l = 0; l < THR, i < TAM; l++, i+=3){
 	 	for (int j = 1, k = 0; k < THR, j < TAM; k++, j +=3){
+	 		/* As seguintes linhas incializam cada struct com seus valores */
 			mat[i][j] = 'T';
 			nodes[l][k].x = i;
 			nodes[l][k].y = j;
 			nodes[l][k].id = id;
-			nodes[l][k].U = nodes[l][k].D = nodes[l][k].R = nodes[l][k].L = 0; 
+			nodes[l][k].U = nodes[l][k].D = nodes[l][k].R = nodes[l][k].L = nodes[l][k].C = 0; 
+			nodes[l][k].live = 1;
+			/*Se a linha é 0 ou 9 ou a coluna é 0 ou 9, a struct é uma thread de borda*/
 			if (l == 0 || l == 9 || k == 0 || k == 9)
 				nodes[l][k].border = 1;
 			else
 				nodes[l][k].border = 0;
 			id++;
-			pthread_create(&sensor_threads[l][k], NULL, sensor_node, &nodes[l][k]);
+			pthread_create(&sensor_threads[l][k], NULL, sensor_node, (void *)(intptr_t)id);
 	 	}
 	}
 }
 
-void send_msg(char *msg, int x, int y){
-	FILE *f;
-	f = fopen("teste.txt","a");
-	fprintf(f,"%s %d %d\n",msg,x,y);
-	fclose(f);
 
+void send_msg(int x, int y){
 	if (nodes[x][y].border == 1)
 		return;
-/*	//TODO: REPLICATE
-	//strncpy(string_destino, string_origem, tamanho);
-*/
+	
+	nodes[x][y].C = 0;
 
 	//	Nó de cima
-	strcpy(nodes[x-1][y].down,msg);
+	memcpy(nodes[x-1][y].down, nodes[x][y].center, sizeof(nodes[x][y].center));
 	nodes[x-1][y].D = 1;
+	
 	//	Nó de baixo
-	strcpy(nodes[x+1][y].up,msg);
+	memcpy(nodes[x+1][y].up, nodes[x][y].center, sizeof(nodes[x][y].center));
 	nodes[x+1][y].U = 1;
-	//	Nó da esquerda
-	strcpy(nodes[x][y+1].left,msg);
+	
+	//	Nó da direita
+	memcpy(nodes[x][y+1].left, nodes[x][y].center, sizeof(nodes[x][y].center));
 	nodes[x][y+1].L = 1;
-	// Nó da direita
-	strcpy(nodes[x][y-1].right,msg);
+	
+	// Nó da esquerda
+	memcpy(nodes[x][y-1].right, nodes[x][y].center, sizeof(nodes[x][y].center));
 	nodes[x][y-1].R = 1;
 }
 
-/*void rep_msg(){
+void prop_msg(int x, int y){
+	if (nodes[x][y].border == 1)
+		return;
+	int ok = 0;
+	size_t size = sizeof(nodes[x][y].center);
+	if (nodes[x][y].U == 1) //Recebeu de cima, manda para todos os outros
+	{
+		nodes[x][y].U = 0;
+		memcpy(nodes[x+1][y].up, nodes[x][y].up,size); //Nó de baixo
+		nodes[x+1][y].U = 1;
+		memcpy(nodes[x][y+1].left, nodes[x][y].up,size); //Nó da direita
+		nodes[x][y+1].L = 1;
+		memcpy(nodes[x][y-1].right, nodes[x][y].up,size); //Nó da esquerda
+		nodes[x][y-1].R = 1;
+		ok = 1;
+	}
+	else if (nodes[x][y].D == 1) //Recebeu de baixo, manda para todos os outros
+	{
+		nodes[x][y].D = 0;
+		memcpy(nodes[x-1][y].down, nodes[x][y].down,size); //Nó de cima
+		nodes[x-1][y].D = 1;
+		memcpy(nodes[x][y+1].left, nodes[x][y].down,size); //Nó da direita
+		nodes[x][y+1].L = 1;
+		memcpy(nodes[x][y-1].right, nodes[x][y].down,size); //Nó da esquerda
+		nodes[x][y-1].R = 1;
+		ok = 1;
+	}
+	else if (nodes[x][y].L == 1) //Recebeu da esquerda, manda para todos os outros
+	{
+		nodes[x][y].L = 0;
+		memcpy(nodes[x-1][y].down, nodes[x][y].left,size); //Nó de cima
+		nodes[x-1][y].D = 1;
+		memcpy(nodes[x+1][y].up, nodes[x][y].left,size); //Nó de baixo
+		nodes[x+1][y].U = 1;
+		memcpy(nodes[x][y+1].left, nodes[x][y].left,size); //Nó da direita
+		nodes[x][y+1].L = 1;
+		ok = 1;
+	}
+	else if (nodes[x][y].R == 1) //Recebeu da direita, manda para todos os outros
+	{
+		nodes[x][y].R = 0;
+		memcpy(nodes[x-1][y].down, nodes[x][y].right,size); //Nó de cima
+		nodes[x-1][y].D = 1;
+		memcpy(nodes[x+1][y].up, nodes[x][y].right,size); //Nó de baixo
+		nodes[x+1][y].U = 1;
+		memcpy(nodes[x][y-1].right, nodes[x][y].right,size); //Nó da esquerda
+		nodes[x][y-1].R = 1;
+		ok = 1;
+	}
+	if(ok)
+		sleep(1);
+}
+void clear_msg(int msg[6]){
+	for (int i = 0; i < 10; ++i)
+	{
+		for (int j = 0; j < 10; ++j)
+		{
+			if (memcmp(msg,nodes[i][j].up,sizeof(msg[0])*6) == 0){
+				//memset(nodes[i][j].up, 0, sizeof(nodes[i][j].up));
+				nodes[i][j].U = 0;
+			}
+			else if (memcmp(msg,nodes[i][j].down,sizeof(msg[0])*6) == 0){
+				//memset(nodes[i][j].down, 0, sizeof(nodes[i][j].down));
+				nodes[i][j].D = 0;
+			}
+			else if (memcmp(msg,nodes[i][j].left,sizeof(msg[0])*6) == 0){
+				//memset(nodes[i][j].left, 0, sizeof(nodes[i][j].left));
+				nodes[i][j].L = 0;
+			}
+			else if (memcmp(msg,nodes[i][j].right,sizeof(msg[0])*6) == 0){
+				//memset(nodes[i][j].right, 0, sizeof(nodes[i][j].right));
+				nodes[i][j].R = 0;
+			}
+			else if (memcmp(msg,nodes[i][j].center,sizeof(msg[0])*6) == 0){
+				//memset(nodes[i][j].center, 0, sizeof(nodes[i][j].center));
+				nodes[i][j].C = 0;
+			}
+		}
+	}
 
-}*/
+}
 
-void *atualiza_hora(void *args){
+void firefighter(int x, int y){
+	//sleep(2);
+	if (mat[x][y] == '/' || mat[x][y] == '@')
+		mat[x][y] = '-';
+}
+
+void *update_time(void *args){
 	while(1){
 		time_t t = time(NULL);
 		struct tm tm = *localtime(&t);
@@ -66,26 +169,28 @@ void *atualiza_hora(void *args){
 void *print_matrix(void *args){
 	while(1)
 	{
+		pthread_mutex_lock(&mtx_prt);
+		printf(BGGRN);
 		system("clear");
-		
 		int idx, idy;
 		int yes = 0;
 		printf("\t");
 		for (int i = 0; i < TAM; ++i)
 		{
 			if(i == 9)
-				printf("9 ");
+				printf("%s9 ",WHT);
 			else if(i < 10)
-				printf("%s%d  ",NRM,i);
+				printf("%s%d  ",WHT,i);
+				//printf("%s%d  ",NRM,i);
 			else
-				printf("%d ",i);
+				printf("%s%d ",WHT,i);
 		}
 
 		printf("\n");
-		sem_wait(&mutex);
+		
 		for (int i = 0; i < TAM; ++i)
 		{
-			printf("%d\t", i);
+			printf("%s%d%s\t",WHT,i,BLK);
 			for (int j = 0; j < TAM; ++j)
 			{
 				
@@ -98,21 +203,21 @@ void *print_matrix(void *args){
 				}
 
 				if (mat[i][j] == '/' || mat[i][j] == '@')
-					printf("%s@%s  ",RED,NRM);
+					printf("%s@%s  ",RED,WHT);
 				else if (mat[i][j] == 'X')
-					printf("%sX%s  ", BLK, NRM);
+					printf("%sX%s  ",GRY,WHT);
 				else
-					printf("%c  ",mat[i][j]);
+					printf("%s%c  ",BLK,mat[i][j]);
 				
 			}
 			printf("\n");
 		}
 
-		printf("Hora: %02d:%02d:%02d\n",hor,min,sec);
+		printf("%sHora: %02d:%02d:%02d\n",WHT,hor,min,sec);
 		if (yes)
-			printf("Thread n. %d foi destruida\n", nodes[idx][idy].id);
+			printf("%sThread n. %d foi destruida\n",WHT,nodes[idx][idy].id);
 		yes = 0;
-		sem_post(&mutex);
+		pthread_mutex_unlock(&mtx_prt);
 		sleep(1);
 	}
 }
@@ -125,66 +230,139 @@ void *fire(void *args){
 		sleep(3);
 		x = rand()%30;
 		y = rand()%30;
-		sem_wait(&mutex); 
+		pthread_mutex_lock(&mtx_prt); 
 		if (mat[x][y] == 'T'){
 			mat[x][y] = '*';
 			idy = ((y+2)/3)-1;
 			idx = ((x+2)/3)-1;
-			pthread_cancel(sensor_threads[idx][idy]);
+			nodes[idx][idy].live = 0;
+			//pthread_cancel(sensor_threads[idx][idy]);
 			log_thr = fopen("threads.log", "a");
 			fprintf(log_thr, "Thread %d destruida em %02d:%02d:%02d\n", nodes[idx][idy].id,hor, min, sec);
 			fclose(log_thr);
 		}
+		else if (mat[x][y] == 'X'){}
 		else
 			mat[x][y] = '@';
-		sem_post(&mutex);
+		pthread_mutex_unlock(&mtx_prt);
 	}
 }
 
 void *sensor_node(void *args){
-	Node *sensor = args;
-	FILE *log_fire;
-	char msg[16];
-	int id;
+	int id = (intptr_t) args;
 	int idx, idy;
 	int x, y;
-	id = sensor->id;
-	x = sensor->x;
-	y = sensor->y;
+	int sent;
+	x = converte_x(id);
+	y = converte_y(id);
+	idx = ((x+2)/3)-1;
+	idy = ((y+2)/3)-1;
 	while(1){
-		sem_wait(&mutex);
-		//Replicate
-		for (int i = x-1; i <= x + 1; ++i)
+		if (nodes[idx][idy].live == 1)
 		{
-			for (int j = x-1; j <= y + 1; ++j)
+			sent = 0;
+			pthread_mutex_lock(&mutex);
+			for (int i = x-1; i <= x + 1; ++i)
 			{
-				
-				if (i == x && j == y)
+				for (int j = y-1; j <= y + 1; ++j)
+				{			
+					if (i == x && j == y)
+						continue;
+					if (mat[i][j] == '@')
+					{	
+						mat[i][j] = '/';
+						nodes[idx][idy].center[0] = nodes[idx][idy].id;
+						nodes[idx][idy].center[1] = i;
+						nodes[idx][idy].center[2] = j;
+						nodes[idx][idy].center[3] = hor;
+						nodes[idx][idy].center[4] = min;
+						nodes[idx][idy].center[5] = sec;
+						nodes[idx][idy].C = 1;
+						if(nodes[idx][idy].border == 0){	
+							send_msg(idx, idy);
+							sent = 1;
+						}
+					}
+				}
+			}
+			if(sent == 0)
+				prop_msg(idx,idy);
+			
+			pthread_mutex_unlock(&mutex);
+			sleep(1);
+		}
+	}
+}
+
+void *central(void *args){
+	int msg[6];
+	size_t size = sizeof(msg);
+	FILE *log_fire;
+	while(1){
+		for (int i = 0; i < 10; i++)
+		{
+			for (int j = 0; j < 10; j++)
+			{
+				if (nodes[i][j].border == 0)
 					continue;
-				if (mat[i][j] == '@')
-				{	
-					mat[i][j] = '/';
-					sprintf(msg,"%03d%02d%02d%02d%02d%02d\n",id,i,j,hor,min,sec);
-					idx = ((x+2)/3)-1;
-					idy = ((y+2)/3)-1;
-					send_msg(msg, idx, idy);
+
+				if (nodes[i][j].U == 1){
+					nodes[i][j].U = 0;
+					log_fire = fopen("incendios.log", "a");
+					memcpy(msg, nodes[i][j].up, size);
+					fprintf(log_fire,"Central %02d:%02d:%02d\n",hor,min,sec);
+					fprintf(log_fire,"A Thread n. %d Identificou um incêndio em [%d][%d]",msg[0],msg[1],msg[2]);
+					fprintf(log_fire," às %02d:%02d:%02d\n",msg[3],msg[4],msg[5]);
+					fclose(log_fire);
+					clear_msg(msg);				
+					firefighter(msg[1],msg[2]);
+				}
+				else if (nodes[i][j].D == 1){
+					nodes[i][j].D = 0;
+					log_fire = fopen("incendios.log", "a");
+					memcpy(msg, nodes[i][j].down, size);
+					fprintf(log_fire,"Central %02d:%02d:%02d\n",hor,min,sec);
+					fprintf(log_fire,"A Thread n. %d Identificou um incêndio em [%d][%d]",msg[0],msg[1],msg[2]);
+					fprintf(log_fire," às %02d:%02d:%02d\n",msg[3],msg[4],msg[5]);
+					fclose(log_fire);					
+					clear_msg(msg);				
+					firefighter(msg[1],msg[2]);
+				}
+				else if (nodes[i][j].L == 1){
+					nodes[i][j].L = 0;
+					log_fire = fopen("incendios.log", "a");
+					memcpy(msg, nodes[i][j].left, size);
+					fprintf(log_fire,"Central %02d:%02d:%02d\n",hor,min,sec);
+					fprintf(log_fire,"A Thread n. %d Identificou um incêndio em [%d][%d]",msg[0],msg[1],msg[2]);
+					fprintf(log_fire," às %02d:%02d:%02d\n",msg[3],msg[4],msg[5]);
+					fclose(log_fire);					
+					clear_msg(msg);				
+					firefighter(msg[1],msg[2]);
+				}
+				else if (nodes[i][j].R == 1){
+					nodes[i][j].R = 0;
+					log_fire = fopen("incendios.log", "a");
+					memcpy(msg, nodes[i][j].right, size);
+					fprintf(log_fire,"Central %02d:%02d:%02d\n",hor,min,sec);
+					fprintf(log_fire,"A Thread n. %d Identificou um incêndio em [%d][%d]",msg[0],msg[1],msg[2]);
+					fprintf(log_fire," às %02d:%02d:%02d\n",msg[3],msg[4],msg[5]);
+					fclose(log_fire);					
+					clear_msg(msg);				
+					firefighter(msg[1],msg[2]);
+				}
+				else if (nodes[i][j].C == 1){
+					nodes[i][j].C = 0;
+					log_fire = fopen("incendios.log", "a");
+					memcpy(msg, nodes[i][j].center, size);
+					fprintf(log_fire,"Central %02d:%02d:%02d\n",hor,min,sec);
+					fprintf(log_fire,"A Thread n. %d Identificou um incêndio em [%d][%d]",msg[0],msg[1],msg[2]);
+					fprintf(log_fire," às %02d:%02d:%02d\n",msg[3],msg[4],msg[5]);
+					fclose(log_fire);					
+					clear_msg(msg);			
+					firefighter(msg[1],msg[2]);
 				}
 			}
 		}
-		
-		/*log_fire = fopen("incendios.log", "a");
-		if ((sensor->U) == 1)
-		fprintf(log_fire,"UP = %s ID = %d\n",(sensor->up),id);
-		if ((sensor->D) == 1)
-		fprintf(log_fire,"DOWN = %s ID = %d\n",(sensor->down),id);
-		if ((sensor->L) == 1)
-		fprintf(log_fire,"LEFT = %s ID = %d\n",(sensor->left),id);
-		if ((sensor->R) == 1)
-		fprintf(log_fire,"RIGHT = %s ID = %d\n",(sensor->right),id);
-		//fprintf(log_fire, "Fogo em [%d][%d]. Thread %d. %02d:%02d:%02d\n",i,j,sensor->id,hor, min, sec);
-		fclose(log_fire);*/
-		sem_post(&mutex);
 		sleep(1);
 	}
-	return 0;
 }
