@@ -22,8 +22,6 @@ char mat[TAM][TAM];
 
 int hor,min,sec;
 
-//TODO:
-// Comunicação entre threads
 
 typedef struct node
 {
