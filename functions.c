@@ -17,7 +17,7 @@ int converte_y(int id){
 	y = 3 * (id%10) - 2;
 	return y;
 }
-/*Esta função cria a matriz com seus devidos símbolos além de inicializar as threads e as structs*/
+
 void create_matrix(char mat[TAM][TAM]){
 	memset(mat, '-', sizeof(mat[0][0])*TAM*TAM);
 	int k = 0;
@@ -25,14 +25,13 @@ void create_matrix(char mat[TAM][TAM]){
 	int id = 1;
 	for (int i = 1, l = 0; l < THR, i < TAM; l++, i+=3){
 	 	for (int j = 1, k = 0; k < THR, j < TAM; k++, j +=3){
-	 		/* As seguintes linhas incializam cada struct com seus valores */
 			mat[i][j] = 'T';
 			nodes[l][k].x = i;
 			nodes[l][k].y = j;
 			nodes[l][k].id = id;
 			nodes[l][k].U = nodes[l][k].D = nodes[l][k].R = nodes[l][k].L = nodes[l][k].C = 0; 
 			nodes[l][k].live = 1;
-			/*Se a linha é 0 ou 9 ou a coluna é 0 ou 9, a struct é uma thread de borda*/
+
 			if (l == 0 || l == 9 || k == 0 || k == 9)
 				nodes[l][k].border = 1;
 			else
@@ -125,23 +124,18 @@ void clear_msg(int msg[6]){
 		for (int j = 0; j < 10; ++j)
 		{
 			if (memcmp(msg,nodes[i][j].up,sizeof(msg[0])*6) == 0){
-				//memset(nodes[i][j].up, 0, sizeof(nodes[i][j].up));
 				nodes[i][j].U = 0;
 			}
 			else if (memcmp(msg,nodes[i][j].down,sizeof(msg[0])*6) == 0){
-				//memset(nodes[i][j].down, 0, sizeof(nodes[i][j].down));
 				nodes[i][j].D = 0;
 			}
 			else if (memcmp(msg,nodes[i][j].left,sizeof(msg[0])*6) == 0){
-				//memset(nodes[i][j].left, 0, sizeof(nodes[i][j].left));
 				nodes[i][j].L = 0;
 			}
 			else if (memcmp(msg,nodes[i][j].right,sizeof(msg[0])*6) == 0){
-				//memset(nodes[i][j].right, 0, sizeof(nodes[i][j].right));
 				nodes[i][j].R = 0;
 			}
 			else if (memcmp(msg,nodes[i][j].center,sizeof(msg[0])*6) == 0){
-				//memset(nodes[i][j].center, 0, sizeof(nodes[i][j].center));
 				nodes[i][j].C = 0;
 			}
 		}
@@ -181,7 +175,6 @@ void *print_matrix(void *args){
 				printf("%s9 ",WHT);
 			else if(i < 10)
 				printf("%s%d  ",WHT,i);
-				//printf("%s%d  ",NRM,i);
 			else
 				printf("%s%d ",WHT,i);
 		}
