@@ -1,6 +1,6 @@
 #include "functions.h"
 
-int converte_x(int id){
+int convert_x(int id){
 	int x;
 	if (id % 10 == 0)
 		id--;
@@ -8,7 +8,7 @@ int converte_x(int id){
 	return x;
 }
 
-int converte_y(int id){
+int convert_y(int id){
 	int y;
 	if (id % 10 == 0){
 		y = 28;
@@ -206,9 +206,9 @@ void *print_matrix(void *args){
 			printf("\n");
 		}
 
-		printf("%sHora: %02d:%02d:%02d\n",WHT,hor,min,sec);
+		printf("%sTime: %02d:%02d:%02d\n",WHT,hor,min,sec);
 		if (yes)
-			printf("%sThread n. %d foi destruida\n",WHT,nodes[idx][idy].id);
+			printf("%sThread #%d has been destroyed\n",WHT,nodes[idx][idy].id);
 		yes = 0;
 		pthread_mutex_unlock(&mtx_prt);
 		sleep(1);
@@ -231,7 +231,7 @@ void *fire(void *args){
 			nodes[idx][idy].live = 0;
 			//pthread_cancel(sensor_threads[idx][idy]);
 			log_thr = fopen("threads.log", "a");
-			fprintf(log_thr, "Thread %d destruida em %02d:%02d:%02d\n", nodes[idx][idy].id,hor, min, sec);
+			fprintf(log_thr, "Thread #%d was destroyed at %02d:%02d:%02d\n", nodes[idx][idy].id,hor, min, sec);
 			fclose(log_thr);
 		}
 		else if (mat[x][y] == 'X'){}
@@ -246,8 +246,8 @@ void *sensor_node(void *args){
 	int idx, idy;
 	int x, y;
 	int sent;
-	x = converte_x(id);
-	y = converte_y(id);
+	x = convert_x(id);
+	y = convert_y(id);
 	idx = ((x+2)/3)-1;
 	idy = ((y+2)/3)-1;
 	while(1){
@@ -301,55 +301,55 @@ void *central(void *args){
 
 				if (nodes[i][j].U == 1){
 					nodes[i][j].U = 0;
-					log_fire = fopen("incendios.log", "a");
+					log_fire = fopen("fire.log", "a");
 					memcpy(msg, nodes[i][j].up, size);
 					fprintf(log_fire,"Central %02d:%02d:%02d\n",hor,min,sec);
-					fprintf(log_fire,"A Thread n. %d Identificou um incêndio em [%d][%d]",msg[0],msg[1],msg[2]);
-					fprintf(log_fire," às %02d:%02d:%02d\n",msg[3],msg[4],msg[5]);
+					fprintf(log_fire,"Thread #%d detected a fire at [%d][%d]",msg[0],msg[1],msg[2]);
+					fprintf(log_fire," at %02d:%02d:%02d\n\n",msg[3],msg[4],msg[5]);
 					fclose(log_fire);
 					clear_msg(msg);				
 					firefighter(msg[1],msg[2]);
 				}
 				else if (nodes[i][j].D == 1){
 					nodes[i][j].D = 0;
-					log_fire = fopen("incendios.log", "a");
+					log_fire = fopen("fire.log", "a");
 					memcpy(msg, nodes[i][j].down, size);
 					fprintf(log_fire,"Central %02d:%02d:%02d\n",hor,min,sec);
-					fprintf(log_fire,"A Thread n. %d Identificou um incêndio em [%d][%d]",msg[0],msg[1],msg[2]);
-					fprintf(log_fire," às %02d:%02d:%02d\n",msg[3],msg[4],msg[5]);
+					fprintf(log_fire,"Thread #%d detected a fire at [%d][%d]",msg[0],msg[1],msg[2]);
+					fprintf(log_fire," at %02d:%02d:%02d\n\n",msg[3],msg[4],msg[5]);
 					fclose(log_fire);					
 					clear_msg(msg);				
 					firefighter(msg[1],msg[2]);
 				}
 				else if (nodes[i][j].L == 1){
 					nodes[i][j].L = 0;
-					log_fire = fopen("incendios.log", "a");
+					log_fire = fopen("fire.log", "a");
 					memcpy(msg, nodes[i][j].left, size);
 					fprintf(log_fire,"Central %02d:%02d:%02d\n",hor,min,sec);
-					fprintf(log_fire,"A Thread n. %d Identificou um incêndio em [%d][%d]",msg[0],msg[1],msg[2]);
-					fprintf(log_fire," às %02d:%02d:%02d\n",msg[3],msg[4],msg[5]);
+					fprintf(log_fire,"Thread #%d detected a fire at [%d][%d]",msg[0],msg[1],msg[2]);
+					fprintf(log_fire," at %02d:%02d:%02d\n\n",msg[3],msg[4],msg[5]);
 					fclose(log_fire);					
 					clear_msg(msg);				
 					firefighter(msg[1],msg[2]);
 				}
 				else if (nodes[i][j].R == 1){
 					nodes[i][j].R = 0;
-					log_fire = fopen("incendios.log", "a");
+					log_fire = fopen("fire.log", "a");
 					memcpy(msg, nodes[i][j].right, size);
 					fprintf(log_fire,"Central %02d:%02d:%02d\n",hor,min,sec);
-					fprintf(log_fire,"A Thread n. %d Identificou um incêndio em [%d][%d]",msg[0],msg[1],msg[2]);
-					fprintf(log_fire," às %02d:%02d:%02d\n",msg[3],msg[4],msg[5]);
+					fprintf(log_fire,"Thread #%d detected a fire at [%d][%d]",msg[0],msg[1],msg[2]);
+					fprintf(log_fire," at %02d:%02d:%02d\n\n",msg[3],msg[4],msg[5]);
 					fclose(log_fire);					
 					clear_msg(msg);				
 					firefighter(msg[1],msg[2]);
 				}
 				else if (nodes[i][j].C == 1){
 					nodes[i][j].C = 0;
-					log_fire = fopen("incendios.log", "a");
+					log_fire = fopen("fire.log", "a");
 					memcpy(msg, nodes[i][j].center, size);
 					fprintf(log_fire,"Central %02d:%02d:%02d\n",hor,min,sec);
-					fprintf(log_fire,"A Thread n. %d Identificou um incêndio em [%d][%d]",msg[0],msg[1],msg[2]);
-					fprintf(log_fire," às %02d:%02d:%02d\n",msg[3],msg[4],msg[5]);
+					fprintf(log_fire,"Thread #%d detected a fire at [%d][%d]",msg[0],msg[1],msg[2]);
+					fprintf(log_fire," at %02d:%02d:%02d\n\n",msg[3],msg[4],msg[5]);
 					fclose(log_fire);					
 					clear_msg(msg);			
 					firefighter(msg[1],msg[2]);

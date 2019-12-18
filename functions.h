@@ -49,8 +49,8 @@ void send_msg(int x, int y);
 void prop_msg(int x, int y);
 void clear_msg(int msg[6]);
 void firefighter(int x, int y);
-int converte_x(int id);
-int converte_y(int id);
+int convert_x(int id);
+int convert_y(int id);
 
 
 #endif

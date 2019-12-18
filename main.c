@@ -10,7 +10,7 @@ int main(int argc, char const *argv[])
 	create_matrix(mat);
 	
 	FILE *log_fire, *log_thr;
-	log_fire = fopen("incendios.log", "w");
+	log_fire = fopen("fire.log", "w");
 	fclose(log_fire);
 	log_thr = fopen("threads.log", "w");
 	fclose(log_thr);
