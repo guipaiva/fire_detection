@@ -32,5 +32,8 @@ And execute:
 ./main
 ```
 
+### Example
+![forest](https://user-images.githubusercontent.com/48967900/71120354-fcf88300-21ba-11ea-80bd-937adb4a113f.png)
+
 ##### Footnote
 > <b id="f1">1</b> Neighbours are nodes that are three elements away from the message source, that is, diagonal nodes are not considered. [↩](#a1)
